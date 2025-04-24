@@ -1,7 +1,8 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const app = require('../index');
+
+let app;
 
 const testEmail = 'testuser@example.com';
 const testPassword = 'testpassword';

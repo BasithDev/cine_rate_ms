@@ -1,6 +1,5 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../index');
 
 let app;
 let Review;
