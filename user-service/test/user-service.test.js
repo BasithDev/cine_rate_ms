@@ -10,10 +10,13 @@ const testName = 'Test User';
 let userId = 'fakeUserId';
 let accessToken;
 
-// --- MOCK MONGOOSE USER MODEL ---
-const User = mongoose.model('User');
+let User;
+beforeAll(async () => {
+  jest.resetModules(); // Clear the require cache
+  process.env.MONGODB_URI = 'mongodb://localhost:27017/cinerate-user-test';
+  app = require('../index'); // Registers schema
+  User = mongoose.model('User');
 
-beforeAll(() => {
   // Mock bcrypt
   jest.spyOn(bcrypt, 'compare').mockImplementation((pw, hash) => {
     if ((pw === testPassword && hash === '$2a$10$hashedpassword') || (pw === 'newpass123' && hash === '$2a$10$newhashedpassword')) return Promise.resolve(true);
