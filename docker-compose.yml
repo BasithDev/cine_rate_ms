@@ -1,0 +1,33 @@
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - user-service
+      - review-service
+      - watchlist-service
+  user-service:
+    build: ./user-service
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+  review-service:
+    build: ./review-service
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+  watchlist-service:
+    build: ./watchlist-service
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data:/data/db
+    restart: unless-stopped

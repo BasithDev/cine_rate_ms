@@ -1,0 +1,25 @@
+jest.mock('express-jwt', () => ({
+  expressjwt: () => {
+    const mw = (req, res, next) => next();
+    mw.unless = () => mw;
+    return mw;
+  }
+}));
+const request = require('supertest');
+const app = require('../index');
+
+describe('API Gateway', () => {
+  test('GET /health should confirm gateway is healthy', async () => {
+    const res = await request(app).get('/health');
+    expect(res.statusCode).toBe(200);
+    expect(res.text).toBe('API Gateway is healthy');
+  });
+
+  test('GET /unknown should return 404 for unknown service', async () => {
+    const res = await request(app).get('/unknown');
+    expect(res.statusCode).toBe(404);
+    expect(res.text).toBe('Service not found');
+  });
+
+  // Integration proxy tests for /user, /review, /watchlist can be added with proper mock or integration setup.
+});
