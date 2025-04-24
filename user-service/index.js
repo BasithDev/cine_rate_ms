@@ -56,9 +56,10 @@ app.post('/change-password', async (req, res) => {
 
 app.post('/signup', async (req, res) => {
   const { email, password, name } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = new User({ email, password: hashedPassword, name });
+
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ email, password: hashedPassword, name });
     await user.save();
     res.status(201).json({ message: 'User created' });
   } catch (error) {
@@ -70,11 +71,14 @@ app.post('/signup', async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
+  console.log('[DEBUG] Login request body:', req.body);
   const { email, password } = req.body;
   const user = await User.findOne({ email });   
+  console.log('[DEBUG] Found user:', user);
   if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
   const isMatch = await bcrypt.compare(password, user.password);
+  console.log('[DEBUG] Password match:', isMatch, 'provided:', password, 'stored hash:', user.password);
   if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
   const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '3h' });
