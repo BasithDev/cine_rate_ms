@@ -28,4 +28,4 @@ jobs:
         with:
           context: ${{ matrix.service }}
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/cinerate-${{ matrix.service }}:latest,${{ secrets.DOCKERHUB_USERNAME }}/cinerate-${{ matrix.service }}:${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/cinerate-${{ matrix.service }}:latest,${{ secrets.DOCKER_USERNAME }}/cinerate-${{ matrix.service }}:${{ github.sha }}
