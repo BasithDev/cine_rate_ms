@@ -4,41 +4,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 
 let app;
-let Watchlist;
-const fakeUserId = 'fakeUserId';
-const fakeMovieId = 'fakeMovieId';
-const fakeWatchlist = [{ userId: fakeUserId, movieId: fakeMovieId }];
 
 beforeAll(async () => {
   jest.resetModules(); // Clear the require cache
   process.env.MONGODB_URI = 'mongodb://localhost:27017/cinerate-watchlist-test';
-  app = require('../index'); // Registers schema
-  Watchlist = mongoose.model('Watchlist');
-
-  // --- MOCK MONGOOSE WATCHLIST MODEL ---
-  jest.spyOn(Watchlist, 'find').mockImplementation((query) => {
-    if (query.userId === fakeUserId) {
-      return { exec: () => Promise.resolve(fakeWatchlist) };
-    }
-    return { exec: () => Promise.resolve([]) };
-  });
-  jest.spyOn(Watchlist, 'findOne').mockImplementation((query) => {
-    if (query.userId === fakeUserId && query.movieId === fakeMovieId) {
-      return { exec: () => Promise.resolve({ userId: fakeUserId, movieId: fakeMovieId }) };
-    }
-    return { exec: () => Promise.resolve(null) };
-  });
-  jest.spyOn(Watchlist, 'findOneAndDelete').mockImplementation((query) => {
-    if (query.userId === fakeUserId && query.movieId === fakeMovieId) {
-      return { exec: () => Promise.resolve({ userId: fakeUserId, movieId: fakeMovieId }) };
-    }
-    return { exec: () => Promise.resolve(null) };
-  });
-  jest.spyOn(Watchlist.prototype, 'save').mockResolvedValue(true);
-});
-
-afterAll(() => {
-  jest.restoreAllMocks();
+  app = require('../index');
 });
 
 afterAll(async () => {

@@ -1,63 +1,16 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-
-let app;
+const app = require('../index');
 
 const testEmail = 'testuser@example.com';
 const testPassword = 'testpassword';
 const testName = 'Test User';
-let userId = 'fakeUserId';
+let userId;
 let accessToken;
 
-let User;
-beforeAll(async () => {
-  jest.resetModules(); // Clear the require cache
-  process.env.MONGODB_URI = 'mongodb://localhost:27017/cinerate-user-test';
-  app = require('../index'); // Registers schema
-  User = mongoose.model('User');
-
-  // Mock bcrypt
-  jest.spyOn(bcrypt, 'compare').mockImplementation((pw, hash) => {
-    if ((pw === testPassword && hash === '$2a$10$hashedpassword') || (pw === 'newpass123' && hash === '$2a$10$newhashedpassword')) return Promise.resolve(true);
-    return Promise.resolve(false);
-  });
-  jest.spyOn(bcrypt, 'hash').mockImplementation((pw) => {
-    if (pw === testPassword) return Promise.resolve('$2a$10$hashedpassword');
-    if (pw === 'newpass123') return Promise.resolve('$2a$10$newhashedpassword');
-    return Promise.resolve('somehash');
-  });
-
-  // Mock User.findOne
-  jest.spyOn(User, 'findOne').mockImplementation((query) => {
-    if (query.email === testEmail || query._id === userId) {
-      return Promise.resolve({
-        _id: userId,
-        email: testEmail,
-        password: '$2a$10$hashedpassword',
-        name: testName,
-        save: jest.fn().mockResolvedValue(true)
-      });
-    }
-    return Promise.resolve(null);
-  });
-  // Mock User.findOneAndUpdate
-  jest.spyOn(User, 'findOneAndUpdate').mockImplementation((query, update) => {
-    if (query._id === userId) {
-      return Promise.resolve({
-        _id: userId,
-        email: update.email || testEmail,
-        name: update.name || testName
-      });
-    }
-    return Promise.resolve(null);
-  });
-  // Mock User.prototype.save
-  jest.spyOn(User.prototype, 'save').mockResolvedValue(true);
-});
-
 afterAll(async () => {
-  jest.restoreAllMocks();
+  await mongoose.connection.db.dropDatabase();
+  await mongoose.connection.close();
 });
 
 describe('User Service', () => {
