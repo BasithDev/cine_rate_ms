@@ -5,6 +5,8 @@ jest.mock('express-jwt', () => ({
     return mw;
   }
 }));
+jest.mock('axios');
+const axios = require('axios');
 const request = require('supertest');
 const app = require('../index');
 
@@ -21,5 +23,33 @@ describe('API Gateway', () => {
     expect(res.text).toBe('Service not found');
   });
 
-  // Integration proxy tests for /user, /review, /watchlist can be added with proper mock or integration setup.
+  describe('Proxy integration tests', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    test('Proxies /user/test to downstream user service', async () => {
+      axios.mockResolvedValueOnce({ status: 200, data: { message: 'User Service Test' } });
+      const res = await request(app).get('/user/test');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ message: 'User Service Test' });
+      expect(axios).toHaveBeenCalled();
+    });
+
+    test('Proxies /review/test to downstream review service', async () => {
+      axios.mockResolvedValueOnce({ status: 200, data: { message: 'Review Service Test' } });
+      const res = await request(app).get('/review/test');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ message: 'Review Service Test' });
+      expect(axios).toHaveBeenCalled();
+    });
+
+    test('Proxies /watchlist/test to downstream watchlist service', async () => {
+      axios.mockResolvedValueOnce({ status: 200, data: { message: 'Watchlist Service Test' } });
+      const res = await request(app).get('/watchlist/test');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ message: 'Watchlist Service Test' });
+      expect(axios).toHaveBeenCalled();
+    });
+  });
 });
