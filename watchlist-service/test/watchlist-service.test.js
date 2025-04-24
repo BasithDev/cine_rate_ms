@@ -8,7 +8,7 @@ let mongoServer;
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
-  await connectToDatabase(uri); // use exported connection function
+  await connectToDatabase(uri);
 });
 
 afterAll(async () => {

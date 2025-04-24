@@ -1,6 +1,6 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../index');
+const { app, connectToDatabase } = require('../index');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
 const testReview = {
@@ -15,15 +15,21 @@ const testReview = {
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = new MongoMemoryServer();
-  const uri = await mongoServer.getUri();
-  await mongoose.connect(uri);
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+  await connectToDatabase(uri);
 });
 
 afterAll(async () => {
-  await mongoose.connection.db.dropDatabase();
-  await mongoose.connection.close();
+  await mongoose.disconnect();
   await mongoServer.stop();
+});
+
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    await collections[key].deleteMany({});
+  }
 });
 
 describe('Review Service', () => {
@@ -42,9 +48,13 @@ describe('Review Service', () => {
   });
 
   test('GET /:mediaType/:contentId should return reviews', async () => {
+    // Add a review first
+    await request(app).post('/add').send(testReview);
+    // Now fetch reviews
     const res = await request(app).get(`/${testReview.mediaType}/${testReview.contentId}`);
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
     expect(res.body[0]).toHaveProperty('review', testReview.review);
   });
 

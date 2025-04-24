@@ -8,8 +8,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const app = express();
 app.use(express.json());
 
-mongoose.connect('mongodb://localhost:27017/cineRate-user-db');
-
 const UserSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
@@ -85,12 +83,17 @@ app.post('/login', async (req, res) => {
   res.json({ accessToken, userId: user._id, name: user.name });
 });
 
+async function connectToDatabase(uri) {
+  await mongoose.connect(uri);
+}
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-    console.log(`User service running on port ${PORT}`);
+  connectToDatabase('mongodb://localhost:27017/cineRate-user-db').then(() => {
+    app.listen(PORT, () => {
+      console.log(`User service running on port ${PORT}`);
+    });
   });
 }
 
-module.exports = app;
+module.exports = { app, connectToDatabase };

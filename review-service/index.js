@@ -4,8 +4,6 @@ const mongoose = require('mongoose');
 const app = express();
 app.use(express.json());
 
-mongoose.connect('mongodb://localhost:27017/cineRate-review-db');
-
 const ReviewSchema = new mongoose.Schema({
   userId: String,
   contentId: String,
@@ -39,11 +37,17 @@ app.post('/delete', async (req, res) => {
   res.status(201).json({ message: 'Review deleted' });
 });
 
+async function connectToDatabase(uri) {
+  await mongoose.connect(uri);
+}
+
 if (require.main === module) {
   const PORT = process.env.PORT || 3002;
-  app.listen(PORT, () => {
-    console.log(`Review service running on port ${PORT}`);
+  connectToDatabase('mongodb://localhost:27017/cineRate-review-db').then(() => {
+    app.listen(PORT, () => {
+      console.log(`Review service running on port ${PORT}`);
+    });
   });
 }
 
-module.exports = app;
+module.exports = { app, connectToDatabase };
