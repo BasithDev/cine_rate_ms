@@ -1,51 +1,65 @@
-// Tests for watchlist-service endpoints and model
 const request = require('supertest');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
+const { app, connectToDatabase } = require('../index'); // updated import
 
-let app;
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = new MongoMemoryServer();
-  const uri = await mongoServer.getUri();
-  await mongoose.connect(uri);
-  app = require('../index');
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+  await connectToDatabase(uri); // use exported connection function
 });
 
 afterAll(async () => {
-  await mongoose.connection.db.dropDatabase();
-  await mongoose.connection.close();
+  await mongoose.disconnect();
   await mongoServer.stop();
 });
 
-describe('Watchlist Service', () => {
-  test('should pass basic sanity check', () => {
-    expect(true).toBe(true);
-  });
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    await collections[key].deleteMany({});
+  }
+});
 
-  test('GET /test should return service running', async () => {
+describe('Watchlist API', () => {
+  const testData = {
+    userId: 'user123',
+    contentId: 'movie456',
+    mediaType: 'movie'
+  };
+
+  it('should return service running on /test', async () => {
     const res = await request(app).get('/test');
     expect(res.statusCode).toBe(200);
     expect(res.text).toBe('Watchlist service is running');
   });
 
-  test('POST /add should add to watchlist', async () => {
-    const payload = { userId: 'testuser', contentId: 'testcontent', mediaType: 'movie' };
-    const res = await request(app).post('/add').send(payload);
+  it('should add content to watchlist', async () => {
+    const res = await request(app).post('/add').send(testData);
     expect(res.statusCode).toBe(201);
-    expect(res.body.message).toMatch(/added to watchlist|already in the watchlist/);
+    expect(res.body.message).toBe('Content added to watchlist');
   });
 
-  test('GET /:userId should return watchlist', async () => {
-    const res = await request(app).get('/testuser');
+  it('should prevent adding duplicate content', async () => {
+    await request(app).post('/add').send(testData);
+    const res = await request(app).post('/add').send(testData);
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.message).toBe('Content is already in the watchlist');
   });
 
-  test('POST /remove should remove from watchlist', async () => {
-    const payload = { userId: 'testuser', contentId: 'testcontent' };
-    const res = await request(app).post('/remove').send(payload);
+  it('should fetch user watchlist', async () => {
+    await request(app).post('/add').send(testData);
+    const res = await request(app).get(`/${testData.userId}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].contentId).toBe(testData.contentId);
+  });
+
+  it('should remove content from watchlist', async () => {
+    await request(app).post('/add').send(testData);
+    const res = await request(app).post('/remove').send(testData);
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toBe('Content removed from watchlist');
   });

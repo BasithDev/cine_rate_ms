@@ -4,8 +4,6 @@ const mongoose = require('mongoose');
 const app = express();
 app.use(express.json());
 
-mongoose.connect('mongodb://localhost:27017/cineRate-watchlist-db');
-
 const WatchlistSchema = new mongoose.Schema({
   userId: String,
   contentId: String,
@@ -19,18 +17,18 @@ app.get('/test', (req, res) => {
 });
 
 app.get('/:userId', async (req, res) => {
-  const userId = req.params.userId;
-  const watchlist = await Watchlist.find({ userId });
+  const watchlist = await Watchlist.find({ userId: req.params.userId });
   res.json(watchlist);
 });
+
 app.post('/add', async (req, res) => {
   const { userId, contentId } = req.body;
-  const alreadyInWatchlist = await Watchlist.findOne({ userId, contentId });
-  if (alreadyInWatchlist) {
+  const exists = await Watchlist.findOne({ userId, contentId });
+  if (exists) {
     return res.status(200).json({ message: 'Content is already in the watchlist' });
   }
-  const watchlist = new Watchlist({ ...req.body });
-  await watchlist.save();
+  const newItem = new Watchlist({ ...req.body });
+  await newItem.save();
   res.status(201).json({ message: 'Content added to watchlist' });
 });
 
@@ -40,11 +38,19 @@ app.post('/remove', async (req, res) => {
   res.status(201).json({ message: 'Content removed from watchlist' });
 });
 
-if (require.main === module) {
-  const PORT = process.env.PORT || 3003;
-  app.listen(PORT, () => {
-    console.log(`Watchlist service running on port ${PORT}`);
-  });
+// ✅ Export app and connect function
+async function connectToDatabase(uri) {
+  await mongoose.connect(uri);
 }
 
-module.exports = app;
+module.exports = { app, connectToDatabase };
+
+// ✅ Start server only when run directly
+if (require.main === module) {
+  connectToDatabase('mongodb://localhost:27017/cineRate-watchlist-db').then(() => {
+    const PORT = process.env.PORT || 3003;
+    app.listen(PORT, () => {
+      console.log(`Watchlist service running on port ${PORT}`);
+    });
+  });
+}
