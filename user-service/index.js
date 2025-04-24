@@ -56,10 +56,9 @@ app.post('/change-password', async (req, res) => {
 
 app.post('/signup', async (req, res) => {
   const { email, password, name } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = new User({ email, password: hashedPassword, name });
-
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ email, password: hashedPassword, name });
     await user.save();
     res.status(201).json({ message: 'User created' });
   } catch (error) {
@@ -81,6 +80,12 @@ app.post('/login', async (req, res) => {
   const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '3h' });
 
   res.json({ accessToken, userId: user._id, name: user.name });
+});
+
+// Robust error logging middleware for debugging
+app.use((err, req, res, next) => {
+  console.error('Express error:', err.stack || err);
+  res.status(500).json({ message: 'Internal Server Error', error: err.message });
 });
 
 async function connectToDatabase(uri) {

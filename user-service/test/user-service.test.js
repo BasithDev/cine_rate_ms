@@ -17,10 +17,11 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  // Clear users and create a new one for all tests except signup
+  // Clear users for test isolation
   await User.deleteMany({});
-  // We don't want to create user before signup test
-  if (expect.getState().currentTestName !== 'User Service › POST /signup should create a new user') {
+  // Only seed for non-signup tests
+  const currentTest = expect.getState().currentTestName;
+  if (currentTest !== 'User Service › POST /signup should create a new user') {
     await request(app)
       .post('/signup')
       .send({ email: testEmail, password: testPassword, name: testName });
@@ -90,6 +91,4 @@ describe('User Service', () => {
       expect(res.body.message).toBe('Password changed');
     }
   });
-
-
 });
