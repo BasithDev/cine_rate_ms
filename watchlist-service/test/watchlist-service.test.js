@@ -3,6 +3,38 @@ const request = require('supertest');
 const express = require('express');
 const mongoose = require('mongoose');
 
+// --- MOCK MONGOOSE WATCHLIST MODEL ---
+const Watchlist = mongoose.model('Watchlist');
+const fakeUserId = 'fakeUserId';
+const fakeMovieId = 'fakeMovieId';
+const fakeWatchlist = [{ userId: fakeUserId, movieId: fakeMovieId }];
+
+beforeAll(() => {
+  jest.spyOn(Watchlist, 'find').mockImplementation((query) => {
+    if (query.userId === fakeUserId) {
+      return { exec: () => Promise.resolve(fakeWatchlist) };
+    }
+    return { exec: () => Promise.resolve([]) };
+  });
+  jest.spyOn(Watchlist, 'findOne').mockImplementation((query) => {
+    if (query.userId === fakeUserId && query.movieId === fakeMovieId) {
+      return { exec: () => Promise.resolve({ userId: fakeUserId, movieId: fakeMovieId }) };
+    }
+    return { exec: () => Promise.resolve(null) };
+  });
+  jest.spyOn(Watchlist, 'findOneAndDelete').mockImplementation((query) => {
+    if (query.userId === fakeUserId && query.movieId === fakeMovieId) {
+      return { exec: () => Promise.resolve({ userId: fakeUserId, movieId: fakeMovieId }) };
+    }
+    return { exec: () => Promise.resolve(null) };
+  });
+  jest.spyOn(Watchlist.prototype, 'save').mockResolvedValue(true);
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
 let app;
 
 beforeAll(async () => {

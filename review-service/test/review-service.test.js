@@ -2,6 +2,42 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 const app = require('../index');
 
+// --- MOCK MONGOOSE REVIEW MODEL ---
+const Review = mongoose.model('Review');
+const fakeUserId = 'fakeUserId';
+const fakeMovieId = 'fakeMovieId';
+const fakeReviewId = 'fakeReviewId';
+const fakeReviews = [{ _id: fakeReviewId, userId: fakeUserId, movieId: fakeMovieId, review: 'Great movie!' }];
+
+beforeAll(() => {
+  jest.spyOn(Review, 'find').mockImplementation((query) => {
+    if (query.userId === fakeUserId) {
+      return { exec: () => Promise.resolve(fakeReviews) };
+    }
+    if (query.movieId === fakeMovieId) {
+      return { exec: () => Promise.resolve(fakeReviews) };
+    }
+    return { exec: () => Promise.resolve([]) };
+  });
+  jest.spyOn(Review, 'findOne').mockImplementation((query) => {
+    if (query._id === fakeReviewId) {
+      return { exec: () => Promise.resolve(fakeReviews[0]) };
+    }
+    return { exec: () => Promise.resolve(null) };
+  });
+  jest.spyOn(Review, 'findOneAndDelete').mockImplementation((query) => {
+    if (query._id === fakeReviewId) {
+      return { exec: () => Promise.resolve(fakeReviews[0]) };
+    }
+    return { exec: () => Promise.resolve(null) };
+  });
+  jest.spyOn(Review.prototype, 'save').mockResolvedValue(true);
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
 const testReview = {
   userId: 'testuser',
   contentId: 'testcontent',
