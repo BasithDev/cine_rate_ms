@@ -3,13 +3,19 @@ const request = require('supertest');
 const express = require('express');
 const mongoose = require('mongoose');
 
-// --- MOCK MONGOOSE WATCHLIST MODEL ---
-const Watchlist = mongoose.model('Watchlist');
+let app;
+let Watchlist;
 const fakeUserId = 'fakeUserId';
 const fakeMovieId = 'fakeMovieId';
 const fakeWatchlist = [{ userId: fakeUserId, movieId: fakeMovieId }];
 
-beforeAll(() => {
+beforeAll(async () => {
+  jest.resetModules(); // Clear the require cache
+  process.env.MONGODB_URI = 'mongodb://localhost:27017/cinerate-watchlist-test';
+  app = require('../index'); // Registers schema
+  Watchlist = mongoose.model('Watchlist');
+
+  // --- MOCK MONGOOSE WATCHLIST MODEL ---
   jest.spyOn(Watchlist, 'find').mockImplementation((query) => {
     if (query.userId === fakeUserId) {
       return { exec: () => Promise.resolve(fakeWatchlist) };
@@ -33,14 +39,6 @@ beforeAll(() => {
 
 afterAll(() => {
   jest.restoreAllMocks();
-});
-
-let app;
-
-beforeAll(async () => {
-  jest.resetModules(); // Clear the require cache
-  process.env.MONGODB_URI = 'mongodb://localhost:27017/cinerate-watchlist-test';
-  app = require('../index');
 });
 
 afterAll(async () => {

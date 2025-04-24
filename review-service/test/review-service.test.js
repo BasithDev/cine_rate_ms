@@ -2,14 +2,20 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 const app = require('../index');
 
-// --- MOCK MONGOOSE REVIEW MODEL ---
-const Review = mongoose.model('Review');
+let app;
+let Review;
 const fakeUserId = 'fakeUserId';
 const fakeMovieId = 'fakeMovieId';
 const fakeReviewId = 'fakeReviewId';
 const fakeReviews = [{ _id: fakeReviewId, userId: fakeUserId, movieId: fakeMovieId, review: 'Great movie!' }];
 
-beforeAll(() => {
+beforeAll(async () => {
+  jest.resetModules(); // Clear the require cache
+  process.env.MONGODB_URI = 'mongodb://localhost:27017/cinerate-review-test';
+  app = require('../index'); // Registers schema
+  Review = mongoose.model('Review');
+
+  // --- MOCK MONGOOSE REVIEW MODEL ---
   jest.spyOn(Review, 'find').mockImplementation((query) => {
     if (query.userId === fakeUserId) {
       return { exec: () => Promise.resolve(fakeReviews) };
@@ -36,6 +42,10 @@ beforeAll(() => {
 
 afterAll(() => {
   jest.restoreAllMocks();
+});
+
+afterAll(async () => {
+  await mongoose.connection.close();
 });
 
 const testReview = {
