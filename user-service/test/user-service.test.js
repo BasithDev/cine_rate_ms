@@ -1,16 +1,24 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const app = require('../index');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
 const testEmail = 'testuser@example.com';
 const testPassword = 'testpassword';
 const testName = 'Test User';
 let userId;
-let accessToken;
+let mongoServer;
+
+beforeAll(async () => {
+  mongoServer = new MongoMemoryServer();
+  const uri = await mongoServer.getUri();
+  await mongoose.connect(uri);
+});
 
 afterAll(async () => {
-  await mongoose.connection.db.dropDatabase();
+  await mongoose.connection.db.dropDatabase();  
   await mongoose.connection.close();
+  await mongoServer.stop();
 });
 
 describe('User Service', () => {

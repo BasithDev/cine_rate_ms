@@ -1,18 +1,22 @@
 // Tests for watchlist-service endpoints and model
 const request = require('supertest');
-const express = require('express');
 const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
 let app;
+let mongoServer;
 
 beforeAll(async () => {
-  jest.resetModules(); // Clear the require cache
-  process.env.MONGODB_URI = 'mongodb://localhost:27017/cinerate-watchlist-test';
+  mongoServer = new MongoMemoryServer();
+  const uri = await mongoServer.getUri();
+  await mongoose.connect(uri);
   app = require('../index');
 });
 
 afterAll(async () => {
+  await mongoose.connection.db.dropDatabase();
   await mongoose.connection.close();
+  await mongoServer.stop();
 });
 
 describe('Watchlist Service', () => {
