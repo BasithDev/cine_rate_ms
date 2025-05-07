@@ -71,14 +71,11 @@ app.post('/signup', async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  console.log('[DEBUG] Login request body:', req.body);
   const { email, password } = req.body;
   const user = await User.findOne({ email });   
-  console.log('[DEBUG] Found user:', user);
   if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
   const isMatch = await bcrypt.compare(password, user.password);
-  console.log('[DEBUG] Password match:', isMatch, 'provided:', password, 'stored hash:', user.password);
   if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
   const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '3h' });
