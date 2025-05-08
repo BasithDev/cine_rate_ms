@@ -47,7 +47,7 @@ module.exports = { app, connectToDatabase };
 
 // ✅ Start server only when run directly
 if (require.main === module) {
-  connectToDatabase('mongodb://localhost:27017/cineRate-watchlist-db').then(() => {
+  connectToDatabase(process.env.MONGO_URI || 'mongodb://localhost:27017/cineRate-watchlist-db').then(() => {
     const PORT = process.env.PORT || 3003;
     app.listen(PORT, () => {
       console.log(`Watchlist service running on port ${PORT}`);

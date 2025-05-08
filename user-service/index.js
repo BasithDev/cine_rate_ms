@@ -95,7 +95,7 @@ async function connectToDatabase(uri) {
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
-  connectToDatabase('mongodb://localhost:27017/cineRate-user-db').then(() => {
+  connectToDatabase(process.env.MONGO_URI || 'mongodb://localhost:27017/cineRate-user-db').then(() => {
     app.listen(PORT, () => {
       console.log(`User service running on port ${PORT}`);
     });

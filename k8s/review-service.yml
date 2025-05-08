@@ -14,9 +14,12 @@ spec:
     spec:
       containers:
       - name: review-service
-        image: cinerate/review-service:latest
+        image: basith1519/cinerate-review-service:v1.0.0
         ports:
         - containerPort: 3000
+        envFrom:
+          - secretRef:
+              name: review-secrets
 ---
 apiVersion: v1
 kind: Service
