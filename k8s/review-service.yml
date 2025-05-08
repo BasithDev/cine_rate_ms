@@ -16,7 +16,7 @@ spec:
       - name: review-service
         image: basith1519/cinerate-review-service:v1.0.0
         ports:
-        - containerPort: 3000
+        - containerPort: 3002
         envFrom:
           - secretRef:
               name: review-secrets
@@ -26,10 +26,10 @@ kind: Service
 metadata:
   name: cinerate-review-service-svc
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: cinerate-review-service
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 3000
+      targetPort: 3002

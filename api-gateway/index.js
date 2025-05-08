@@ -97,6 +97,7 @@ app.use(async (req, res, next) => {
       res.status(response.status).send(response.data);
     } catch (err) {
       logger.error(err.message);
+      console.log(err)
       res.status(err.response?.status || 500).send(err.response?.data || 'Internal Gateway Error');
     }
   });
