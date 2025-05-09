@@ -5,13 +5,14 @@ const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv').config();
 const axios = require('axios');
 const cors = require('cors');
-const uaParser = require('ua-parser-js');
+const UAParser = require('ua-parser-js');
 const app = express();
 
 app.use(express.json());
 
 console.log('testing pipelines')
 
+//CORS for local development
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3001',
@@ -33,13 +34,11 @@ app.use(cors(corsOptions));
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), // Add timestamp
-    winston.format.printf(({ timestamp, level, message }) => {
-      return `[${timestamp}] [${level.toUpperCase()}]: ${message}`;
-    })
+    winston.format.timestamp(),
+    winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ filename: 'logs/server.log' })
+    new winston.transports.Console()
   ]
 });
 
@@ -53,34 +52,44 @@ app.use(limiter);
 const JWT_SECRET = process.env.JWT_SECRET;
 app.use(jwtMiddleware({ secret: JWT_SECRET, algorithms: ['HS256'] }).unless({ 
   path: [
-    '/health',
-    /^\/user\/login/,
-    /^\/user\/signup/,
-    /^\/user\/test/,
-    /^\/watchlist\/test/,
-    /^\/review\/test/,
-
+    '/api/health',
+    /^\/api\/user\/login/,
+    /^\/api\/user\/signup/,
+    /^\/api\/user\/test/,
+    /^\/api\/watchlist\/test/,
+    /^\/api\/review\/test/,
   ]
 }));
 
-
+// Logging middleware
 app.use((req, res, next) => {
-  const parser = new uaParser(req.headers['user-agent']);
+  const parser = new UAParser(req.headers['user-agent']);
   const { os, browser, device } = parser.getResult();
   const userId = req?.user?.id || "guest";
-  const logMessage = `IP: ${req.ip} | User: ${userId} | ${req.method} ${req.originalUrl} | OS: ${os.name || 'Unknown'} ${os.version || 'Unknown'} | Browser: ${browser.name || 'Unknown'} ${browser.version || 'Unknown'} | Device: ${device.vendor || 'Unknown'} ${device.model || 'Unknown'}`;
-  logger.info(logMessage);
+  logger.info({
+    type: 'request',
+    service: 'api-gateway',
+    method: req.method,
+    path: req.originalUrl,
+    userId: userId,
+    ip: req.ip,
+    userAgent: {
+      os: `${os.name || 'Unknown'} ${os.version || 'Unknown'}`,
+      browser: `${browser.name || 'Unknown'} ${browser.version || 'Unknown'}`,
+      device: `${device.vendor || 'Unknown'} ${device.model || 'Unknown'}`
+    }
+  });
   next();
 });
 
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.status(200).send('API Gateway is healthy');
 });
 
 const serviceMap = {
-  '/user': process.env.USER_SERVICE_URL,
-  '/watchlist': process.env.WATCHLIST_SERVICE_URL,
-  '/review': process.env.REVIEW_SERVICE_URL
+  '/api/user': process.env.USER_SERVICE_URL,
+  '/api/watchlist': process.env.WATCHLIST_SERVICE_URL,
+  '/api/review': process.env.REVIEW_SERVICE_URL
 };
 
 app.use(async (req, res, next) => {
@@ -90,7 +99,7 @@ app.use(async (req, res, next) => {
     if (!serviceURL) return res.status(404).send('Service not found');
   
     try {
-      const url = serviceURL + req.originalUrl.replace(basePath, '')|| '/';
+      const url = serviceURL + req.originalUrl.replace(basePath, '') || '/';
       const response = await axios({
         url,
         method: req.method,

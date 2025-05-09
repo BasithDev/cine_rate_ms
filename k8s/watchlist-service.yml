@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: watchlist-service
-        image: basith1519/cinerate-watchlist-service:v1.0.0
+        image: basith1519/cinerate-watchlist-service:v1.0.2
         ports:
         - containerPort: 3003
         envFrom:
