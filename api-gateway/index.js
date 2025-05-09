@@ -10,6 +10,8 @@ const app = express();
 
 app.use(express.json());
 
+console.log('testing pipelines')
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3001',
